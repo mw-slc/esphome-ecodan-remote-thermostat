@@ -1,0 +1,85 @@
+name: Build Release Firmware OTA images
+
+on:
+  release:
+    types:
+      - created
+#  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release Assets
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: 
+        room: [room-1, room-2]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Create dummy wifi credentials
+        run: |
+          echo "wifi_ssid: dummy" > secrets.yaml
+          echo "wifi_password: dummydummydummy" >> secrets.yaml
+          echo "PREFIX=${{ matrix.room }}-${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          echo "MANIFEST=manifest-${{ matrix.room }}" >> $GITHUB_ENV
+
+      - name: prepare build yaml
+        run: |
+          sed "s/#confs\\/esp32s3-led.yaml/confs\/esp32s3-led.yaml/g; \
+            s/confs\\/wifi.yaml/confs\/wifi-ota.yaml/g; \
+            s/#thermostat-room-1/thermostat-room-1/g" ecodan-remote-thermostat-esphome.yaml > build.yaml
+          sed "s/manifest-room-1/$MANIFEST/g; s/VERSION/$PREFIX/g" pipeline/ota.yaml > ota.yaml
+          echo "<<: !include ota.yaml" >> build.yaml
+
+      - name: Generated yaml
+        run: |
+          cat secrets.yaml
+          cat ota.yaml
+          cat build.yaml
+
+      - name: Display the release tag
+        run: echo ${{ github.event.release.tag_name }}
+
+      - name: Prepare build env
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup esphome build env
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install wheel
+          pip install esphome
+
+      - name: Build firmware
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+        run: |
+          source venv/bin/activate
+          esphome compile build.yaml
+          cp .esphome/build/ecodan-thermostat/.pioenvs/ecodan-thermostat/firmware.ota.bin $PREFIX.ota.bin
+          cp .esphome/build/ecodan-thermostat/.pioenvs/ecodan-thermostat/firmware.factory.bin $PREFIX.factory.bin
+          gh release upload ${{github.event.release.tag_name}} $PREFIX.ota.bin
+          gh release upload ${{github.event.release.tag_name}} $PREFIX.factory.bin
+
+      - name: Create manifest.json for firmware
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+        run: |
+          md5ota=$(md5sum $PREFIX.ota.bin | cut -d ' ' -f 1)
+          echo "md5: $md5ota"
+          echo "ota: $PREFIX.ota.bin"
+          echo "factory: $PREFIX.factory.bin"
+
+          sed "s/VERSION/$PREFIX/g; \
+              s/MD5OTA/$md5ota/g; \
+              s/FILEOTA/$PREFIX.ota.bin/g; \
+              s/FILEFACTORY/$PREFIX.factory.bin/g" pipeline/manifest.json > $MANIFEST.json
+          cat $MANIFEST.json 
+          gh release upload ${{github.event.release.tag_name}} $MANIFEST.json

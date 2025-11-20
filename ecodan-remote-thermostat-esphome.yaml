@@ -2,12 +2,14 @@ substitutions:
   name: ecodan-thermostat
   friendlyName: Ecodan thermostat
 
-esphome:
-  name: ${name}
-  friendly_name: ${friendlyName}
+# enable ota update via http request
+http_request:
+  buffer_size_tx: 20248
 
 ota:
   - platform: esphome
+  - platform: http_request
+  - platform: web_server
 #  password: !secret heatpump_ota_password
 
 api:
@@ -40,36 +42,37 @@ external_components:
 packages:
 # up to 8 thermostats can be defined. 0-7.
   thermostat-room-0: !include { file: confs/thermostat-room.yaml, vars: { room_identifier: 0, room_name: "Room 1" } }
-#  thermostat-room-1: !include { file: confs/thermostat-room.yaml, vars: { room_identifier: 1, room_name: "Room 2" } }
+  #thermostat-room-1: !include { file: confs/thermostat-room.yaml, vars: { room_identifier: 1, room_name: "Room 2" } }
   remote_package:
     url: https://github.com/gekkekoe/esphome-ecodan-remote-thermostat
     ref: main
     refresh: always
-    files: [ 
+    files: [
+            confs/base.yaml,
             confs/esp32s3.yaml,
+            #confs/esp32s3-led.yaml,    # atom s3 status leds
             ## enable label language file
             confs/ecodan-labels-en.yaml,
             #confs/ecodan-labels-nl.yaml,
             #confs/ecodan-labels-it.yaml,
             #confs/ecodan-labels-fr.yaml,
             #confs/debug.yaml,
-            confs/wifi.yaml,
+            confs/wifi.yaml
            ]
 
-# enable logger
 logger:
   baud_rate: 115200
-  logs:
-    esp32.preferences: DEBUG
-    sensor: DEBUG
-    text_sensor: DEBUG
-    binary_sensor: DEBUG
-    switch: DEBUG
-    button: DEBUG
-    number: DEBUG
-    climate: DEBUG
-    component: DEBUG
-    ecodan.component: DEBUG
+  # logs:
+  #   esp32.preferences: DEBUG
+  #   sensor: DEBUG
+  #   text_sensor: DEBUG
+  #   binary_sensor: DEBUG
+  #   switch: DEBUG
+  #   button: DEBUG
+  #   number: DEBUG
+  #   climate: DEBUG
+  #   component: DEBUG
+  #   ecodan.component: DEBUG
 
 # Enable Web server.
 web_server:
