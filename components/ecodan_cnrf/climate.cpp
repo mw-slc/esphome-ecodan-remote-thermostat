@@ -150,11 +150,12 @@ namespace ecodan_cnrf
     climate::ClimateTraits EcodanClimate::traits() {
         auto traits = climate::ClimateTraits();
         // The capabilities of the climate device
-        auto feature_flags = esphome::climate::CLIMATE_SUPPORTS_ACTION;
+        auto flag = esphome::climate::CLIMATE_SUPPORTS_ACTION;
         if (get_current_temp != nullptr)
-            feature_flags |= esphome::climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE;
-        traits.add_feature_flags(feature_flags);
-        
+            flag = flag | esphome::climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE;
+
+        traits.add_feature_flags(flag);
+
         if (this->dhw_climate_mode)  {
 
             traits.set_supported_modes({climate::CLIMATE_MODE_OFF, climate::CLIMATE_MODE_HEAT});

@@ -8,3 +8,8 @@ switch:
       - logger.set_level: VERBOSE
     turn_off_action:
       - logger.set_level: ERROR
+
+button:
+  - platform: restart
+    id: restart_button
+    name: Restart

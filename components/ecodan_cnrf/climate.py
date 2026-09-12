@@ -9,7 +9,7 @@ from esphome.const import (
 from . import ECODAN, CONF_ECODAN_ID, ECODAN_CLIMATE
 AUTO_LOAD = ["ecodan_cnrf"]
 
-ecodan_ns = cg.esphome_ns.namespace("ecodan")
+ecodan_ns = cg.esphome_ns.namespace("ecodan_cnrf")
 EcodanClimate = ecodan_ns.class_("EcodanClimate", climate.Climate, cg.Component)
 
 CONFIG_SCHEMA = cv.Schema(
