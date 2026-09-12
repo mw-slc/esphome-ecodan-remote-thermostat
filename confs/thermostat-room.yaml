@@ -7,6 +7,12 @@ api:
         - lambda: |-
             id(ecodan_instance).set_room_thermostat_current_temp(temperature, ${room_identifier});
 
+globals:
+  - id: saved_temp_room_${room_identifier}
+    type: float
+    restore_value: true
+    initial_value: '20.0'
+
 number:
   - platform: template
     id: room_${room_identifier}
@@ -17,13 +23,20 @@ number:
     internal: false
     lambda: |-
         auto& status = id(ecodan_instance).get_status();
-        return status.CurrentRoomTemperatures[${room_identifier}] != 0xff ? status.CurrentRoomTemperatures[${room_identifier}] : 0.0f;
+        float live_temp = status.CurrentRoomTemperatures[${room_identifier}];
+
+        if (live_temp != 0xff) {
+            if (id(saved_temp_room_${room_identifier}) != live_temp)
+              id(saved_temp_room_${room_identifier}) = live_temp; 
+            return live_temp;
+        }
+        return id(saved_temp_room_${room_identifier});
     set_action:
       - lambda: |-
           id(ecodan_instance).set_room_thermostat_current_temp(x, ${room_identifier});
 
 climate:
-  - platform: ecodan
+  - platform: ecodan_cnrf
     heatpump_climate_room_${room_identifier}:
       name: ${room_name}
       id: heatpump_climate_room_${room_identifier}
@@ -38,4 +51,4 @@ climate:
         id(ecodan_instance).set_room_thermostat_target_temp(x, esphome::ecodan_cnrf::ClimateRoomIdentifier::ROOM_${room_identifier});
       current_temp_func: |-
         auto& status = id(ecodan_instance).get_status();
-        return status.CurrentRoomTemperatures[${room_identifier}] != 0xff ? status.CurrentRoomTemperatures[${room_identifier}] : 0.0f;
+        return status.CurrentRoomTemperatures[${room_identifier}] != 0xff ? status.CurrentRoomTemperatures[${room_identifier}] : id(saved_temp_room_${room_identifier});

@@ -1,5 +1,16 @@
 # ESPHome Ecodan Remote Thermostat
+
+This is Michael's CN-RF coexistence fork. Use the `ecodan_cnrf` component and
+platform from this repository alongside HP's separate `ecodan` component.
+See [fork integration and compatibility](docs/fork-integration.md) and the
+compile-only [dual-UART fixture](tests/dual-uart.yaml). Keep CN-RF hub ID
+`ecodan_instance` for the existing room packages; assign HP a different hub ID.
+The upstream prebuilt binaries linked below do not include this fork's namespace
+isolation. No firmware deployment is implied by the integration tests.
 Mimics a remote thermostat over CNRF. You can use any thermostat/temp sensor as a remote thermostat. This projects supports up to 8 remote thermostats. Use any temperature sensor or thermostat as data source for the Ecodan heatpump. The required hardware is the same as used by https://github.com/gekkekoe/esphome-ecodan-hp
+
+# A better alternative
+With the introduced Asgard PCB, there's another alternative to CNRF (high resolution supported). [more info](https://github.com/gekkekoe/esphome-ecodan-hp/discussions/261) 
 
 # available languages
 English (default), Dutch, Italian, French, Spanish. Select the language in `ecodan-remote-thermostat-esphome.yaml` file. 
