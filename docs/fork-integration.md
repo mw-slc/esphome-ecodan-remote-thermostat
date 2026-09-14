@@ -8,7 +8,7 @@
 - Integrated upstream main: `7672b7f90cc894f69e7a278b8411e3c53ab43660`.
 - Common ancestor: `1127c8149fb21c329dd6814e31f1798eba8489ce` (Git ancestry exists despite GitHub reporting fork:false).
 - Integration branch: `chore/upstream-cnrf-sync`; ordinary two-parent merge, no history rewrite.
-- HP dependency production pin and latest main at verification: `aae8c4b072621de46acfb75e5d21df4177673637`.
+- HP dependency production pin and latest main at the original integration build (not a claim about current latest): `aae8c4b072621de46acfb75e5d21df4177673637`.
 
 ## Complete customization inventory and decisions
 
@@ -24,13 +24,13 @@ The original owned delta was inspected with rename detection against the common 
 | climate.py generated Status reference | Retain `ecodan_cnrf::Status`. Correct the previously missed climate class namespace to `ecodan_cnrf`. |
 | `confs/thermostat-room.yaml` enum reference | Retain CN-RF qualification and correct the previously missed platform from `ecodan` to `ecodan_cnrf`. |
 | Local ClimateTraits port in climate.cpp | Replace with latest upstream's equivalent feature-flags implementation; no second local compatibility patch is needed. |
-| Removal of queue include in ecodan.h | Drop customization; upstream's explicit `<queue>` is required for std::queue and avoids reliance on transitive headers. |
+| ecodan.h queue include | Accept upstream addition. Neither the common ancestor nor installed pin included `<queue>`: it was not an owned net removal. The explicit header avoids reliance on transitive includes. |
 | Main example | Correct previously unmodified upstream URLs/component selection to the owned fork and `ecodan_cnrf`, including the commented local-source example. |
 | Hub and entity IDs / service API | Preserve CN-RF's `ecodan_instance`, `heatpump_climate_room_0/1`, `room_0/1`, and `set_climate_temperature_room_0/1`. The dual fixture gives HP a distinct `hp_instance` and distinct UART IDs. HA exposes these as `esphome.<node>_set_climate_temperature_room_0/1`; node prefix is determined by the deployed name, not this library. |
 | Package changes from upstream | Accept restored room-temperature globals (`saved_temp_room_*`) and base restart button. No existing entities/services renamed. Do not include HP/CNRF base packages with duplicate IDs; the fixture only includes CN-RF room packages and HP hub. |
 | README and release workflow upstream changes | Accept Asgard documentation and room-1/room-2 release split. Upstream project/hardware links remain attribution, not fork firmware validation. |
 | Macro names and relative headers/imports | Original fork did not rename macros. Retain values; the dual compilation is the collision gate. No new HP dependency is introduced in Python. |
-| New safety fixes | Guard room index before any write; finite temperatures only, nonfinite values become existing 0xff unknown sentinel. Add missing breaks to both THERMOSTAT_STATE_RES handlers, preserving real unknown-response logging. |
+| New safety fixes | Current-temp setter guards the index and maps nonfinite readings to the existing 0xff unknown sentinel. Target-temp setter rejects invalid indices, nonfinite inputs and inputs outside its byte encoding range (-64 to 63.5 C) without changing state or queuing commands. Both THERMOSTAT_STATE_RES handlers retain explicit breaks and real unknown-response logging. |
 | New test/docs/ignore files | Host behavioral regressions, compile-only board fixture, fork usage guidance; ignore Python caches and sanitizer core dumps. |
 
 ## Upstream warnings checked

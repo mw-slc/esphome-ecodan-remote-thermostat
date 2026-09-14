@@ -38,5 +38,15 @@ int main() {
     cpp = tmp_path / 'setter.cpp'
     cpp.write_text(harness)
     exe = tmp_path / 'setter'
-    subprocess.run(['g++', '-std=c++17', '-fsanitize=undefined,bounds', '-fno-sanitize-recover=all', str(cpp), '-o', str(exe)], check=True)
+    flags = ['g++', '-std=c++17', '-Werror=type-limits', '-fsanitize=undefined,bounds', '-fno-sanitize-recover=all']
+    subprocess.run(flags + [str(cpp), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
+
+    # Prove the diagnostic gate rejects the original always-true uint8 comparison.
+    mutated = harness.replace('if (room >= sizeof(', 'if (room >= 0 && room >= sizeof(')
+    assert mutated != harness
+    cpp.write_text(mutated)
+    negative = subprocess.run(flags + [str(cpp), '-o', str(exe)], capture_output=True, text=True)
+    assert negative.returncode != 0
+    assert '-Werror=type-limits' in negative.stderr
+    assert 'always true' in negative.stderr
