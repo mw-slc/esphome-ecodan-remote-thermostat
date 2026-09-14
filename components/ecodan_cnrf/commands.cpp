@@ -2,6 +2,7 @@
 
 #include "esphome.h"
 
+#include <cmath>
 #include <functional>
 #include <queue>
 
@@ -9,8 +10,11 @@ namespace esphome {
 namespace ecodan_cnrf 
 {       
     void EcodanHeatpump::set_room_thermostat_target_temp(float temp, ClimateRoomIdentifier room) {
-        if (temp != NAN) {
-            auto room_index = static_cast<uint8_t>(room);
+        const auto room_index = static_cast<uint8_t>(room);
+        // Reject invalid commands without changing state or sending a packet.
+        // The wire encoder stores temperature * 2 + 128 in a uint8_t.
+        if (room_index < MAX_REMOTE_THERMOSTATS && std::isfinite(temp) &&
+            temp >= -64.0f && temp <= 63.5f) {
             status.TargetRoomTemperatures[room_index] = temp;
 
             Message cmd{MsgType::THERMOSTAT_TARGET_TEMP_SET, SetType::THERMOSTAT_TEMPERATURE_SETTINGS};
